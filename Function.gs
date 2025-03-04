@@ -1,58 +1,73 @@
 // --- Fungsi Pencarian (searchFiles) ---
 function searchFiles(query) {
-    let sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
-    let data = sheet.getDataRange().getValues();
-    let results = [];
+    try { // Tambahkan try-catch
+        Logger.log("searchFiles dijalankan!");
+        Logger.log("Query yang diterima: " + query);
 
-    // Loop melalui data (mulai dari baris kedua, lewati header)
-    for (let i = 1; i < data.length; i++) {
-        let fileId = data[i][0];
-        let fileName = data[i][1];
-        let fileType = data[i][2];
-        let caption = data[i][3];
-        let messageLink = data[i][5];
+        let sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
+        let data = sheet.getDataRange().getValues();
+        Logger.log("Jumlah baris data: " + data.length);
 
-        // Pencarian case-insensitive (ubah ke lowercase)
-        let queryLower = query.toLowerCase();
-        let fileNameLower = fileName.toLowerCase();
-        let captionLower = caption.toLowerCase();
+        let results = [];
 
-        // Cek apakah query cocok dengan nama file atau caption
-        if (fileNameLower.includes(queryLower) || captionLower.includes(queryLower)) {
-            let result;
+        for (let i = 1; i < data.length; i++) { // Mulai dari 1 (lewati header)
+            let fileId = data[i][0];
+            let fileName = data[i][1];
+            let fileType = data[i][2];
+            let caption = data[i][3];
+            let messageLink = data[i][5];
 
-            if (fileType == "photo") {
-                result = {
-                    type: "photo",
-                    id: fileId, // Gunakan fileId sebagai ID unik
-                    photo_file_id: fileId, // ID file untuk dikirim kembali ke Telegram
-                    title: fileName,
-                    caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
-                    parse_mode: "HTML",
-                };
-            } else if (fileType == "document") {
-                result = {
-                    type: "document",
-                    id: fileId,
-                    document_file_id: fileId, //Gunakan file_id
-                    title: fileName,
-                    caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
-                    parse_mode: "HTML",
-                    thumb_url: "", //Optional
-                    thumb_width: 50,  //Optional
-                    thumb_height: 50 //Optional
-                };
-            } // Tambahkan else if untuk jenis file lain jika perlu
+            Logger.log("Memproses file: " + fileName);
 
-            if (result) {
-                results.push(result);
+            // Pastikan semua variabel ada nilainya sebelum toLowerCase()
+            let queryLower = query ? query.toLowerCase() : "";
+            let fileNameLower = fileName ? fileName.toLowerCase() : "";
+            let captionLower = caption ? caption.toLowerCase() : "";
+
+
+            if (fileNameLower.includes(queryLower) || captionLower.includes(queryLower)) {
+                let result;
+
+                if (fileType == "photo") {
+                    result = {
+                        type: "photo",
+                        id: fileId,
+                        photo_file_id: fileId,
+                        title: fileName,
+                        caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
+                        parse_mode: "HTML",
+                    };
+                } else if (fileType == "document") {
+                    result = {
+                        type: "document",
+                        id: fileId,
+                        document_file_id: fileId,
+                        title: fileName,
+                        caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
+                        parse_mode: "HTML",
+                        thumb_url: "",
+                        thumb_width: 50,
+                        thumb_height: 50
+                    };
+                }
+
+                if (result) {
+                    results.push(result);
+                    Logger.log("Hasil ditemukan: " + JSON.stringify(result));
+                }
             }
         }
+
+        Logger.log("Hasil pencarian: " + JSON.stringify(results));
+        return results;
+
+    } catch (error) {
+        Logger.log("Error di searchFiles: " + error.message);
+        Logger.log("Stack trace: " + error.stack);
+        //  tg.sendMessage(adminBot, "Error di searchFiles: " + error.message); //Tidak perlu kirim ke admin, sudah di handle di doPost
+        return []; // Kembalikan array kosong jika error
     }
-
-    return results;
 }
-
 // --- Fungsi-fungsi dari function.gs kamu (yang tidak berubah) ---
 // (Semua fungsi sendMsgKeyboardInline, kirimPesanX, dll. tetap sama)
 
