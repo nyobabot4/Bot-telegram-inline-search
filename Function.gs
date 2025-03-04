@@ -1,6 +1,6 @@
 // --- Fungsi Pencarian (searchFiles) ---
 function searchFiles(query) {
-    try { // Tambahkan try-catch
+    try {
         Logger.log("searchFiles dijalankan!");
         Logger.log("Query yang diterima: " + query);
 
@@ -9,6 +9,7 @@ function searchFiles(query) {
         Logger.log("Jumlah baris data: " + data.length);
 
         let results = [];
+        let usedIds = {}; // Objek untuk melacak ID yang sudah digunakan
 
         for (let i = 1; i < data.length; i++) { // Mulai dari 1 (lewati header)
             let fileId = data[i][0];
@@ -17,13 +18,33 @@ function searchFiles(query) {
             let caption = data[i][3];
             let messageLink = data[i][5];
 
-            Logger.log("Memproses file: " + fileName);
+            Logger.log("Memproses file: " + fileName + ", fileId: " + fileId);
 
-            // Pastikan semua variabel ada nilainya sebelum toLowerCase()
+            // 1. Pastikan fileId ada dan adalah string
+            if (!fileId || typeof fileId !== 'string') {
+                Logger.log("WARNING: fileId tidak valid untuk baris " + (i + 1) + ". Melewati baris ini.");
+                continue; // Lewati baris ini
+            }
+
+            // 2. Cek duplikasi ID, dan tambahkan akhiran unik jika perlu
+            let id = fileId;
+            let counter = 1;
+            while (usedIds[id]) {
+                // Tambahkan akhiran unik (misalnya, _1, _2, _3, dst.)
+                id = fileId + "_" + counter;
+                counter++;
+                Logger.log("WARNING: Duplikat fileId ditemukan. Menggunakan ID yang dimodifikasi: " + id);
+            }
+            usedIds[id] = true;
+
+
+            // 3. Batasi panjang ID (jaga-jaga)
+            id = id.substring(0, 64);
+
+            // 4. Pastikan semua variabel ada nilainya (untuk toLowerCase)
             let queryLower = query ? query.toLowerCase() : "";
             let fileNameLower = fileName ? fileName.toLowerCase() : "";
             let captionLower = caption ? caption.toLowerCase() : "";
-
 
             if (fileNameLower.includes(queryLower) || captionLower.includes(queryLower)) {
                 let result;
@@ -31,8 +52,8 @@ function searchFiles(query) {
                 if (fileType == "photo") {
                     result = {
                         type: "photo",
-                        id: fileId,
-                        photo_file_id: fileId,
+                        id: id, // Gunakan ID yang sudah diproses dan unik
+                        photo_file_id: fileId, // Tetap gunakan fileId asli untuk mengirim
                         title: fileName,
                         caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
                         parse_mode: "HTML",
@@ -40,12 +61,12 @@ function searchFiles(query) {
                 } else if (fileType == "document") {
                     result = {
                         type: "document",
-                        id: fileId,
-                        document_file_id: fileId,
+                        id: id, // Gunakan ID yang sudah diproses dan unik
+                        document_file_id: fileId, // Tetap gunakan fileId asli untuk mengirim
                         title: fileName,
                         caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
                         parse_mode: "HTML",
-                        thumb_url: "",
+                        thumb_url: "",  // Sertakan, meskipun kosong
                         thumb_width: 50,
                         thumb_height: 50
                     };
@@ -64,12 +85,11 @@ function searchFiles(query) {
     } catch (error) {
         Logger.log("Error di searchFiles: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        //  tg.sendMessage(adminBot, "Error di searchFiles: " + error.message); //Tidak perlu kirim ke admin, sudah di handle di doPost
         return []; // Kembalikan array kosong jika error
     }
 }
-// --- Fungsi-fungsi dari function.gs kamu (yang tidak berubah) ---
-// (Semua fungsi sendMsgKeyboardInline, kirimPesanX, dll. tetap sama)
+
+// --- Fungsi-fungsi Telegram Lainnya (Tidak Berubah) ---
 
 //inline keyboard v1
 function sendMsgKeyboardInline(msg, pesan, keyboard) {
