@@ -1,38 +1,38 @@
-var token = "7849305390:AAHsD9O-IhGyLnCJPxOoIg1a_acn5spNOFA"; // GANTI dengan token bot kamu
+var token = "7849305390:AAHsD9O-IhGyLnCJPxOoIg1a_acn5spNOFA"; // Token bot kamu
 const tg = new telegram.daftar(token);
-const adminBot = 2109541199; // GANTI dengan ID admin kamu
-const spreadsheetId = "10TupgRfroPas2SjNNY19Q4uB82AYGUVwIIisBxb9Mgg"; // GANTI dengan ID Spreadsheet kamu!
-const debug = false; // Biarkan false, kecuali kamu perlu debug lebih lanjut
+const adminBot = 2109541199; // GANTI dengan ID admin kamu (jika bukan ini)
+const spreadsheetId = "10TupgRfroPas2SjNNY19Q4uB82AYGUVwIIisBxb9Mgg"; // ID Spreadsheet kamu
+const debug = false; // Biarkan false
 
-// --- Fungsi-fungsi Telegram (dari code.gs kamu) ---
+// --- Fungsi-fungsi Telegram ---
 function getMe() {
     let me = tg.getMe();
-    Logger.log("getMe: " + JSON.stringify(me)); // Log hasil getMe
+    Logger.log("getMe: " + JSON.stringify(me));
     return me;
 }
 
 function setWebhook() {
     var url = "YOUR_WEB_APP_URL"; // GANTI dengan URL Web App kamu setelah deploy!
     var r = tg.setWebhook(url);
-    Logger.log("setWebhook: " + r); // Log hasil setWebhook
+    Logger.log("setWebhook: " + r);
     return r;
 }
 
 function getWebhookInfo() {
     let hasil = tg.getWebhookInfo();
-    Logger.log("getWebhookInfo: " + JSON.stringify(hasil)); // Log hasil getWebhookInfo
+    Logger.log("getWebhookInfo: " + JSON.stringify(hasil));
     return hasil;
 }
 
 function deleteWebhook() {
     let hasil = tg.deleteWebhook();
-    Logger.log("deleteWebhook: " + hasil); // Log hasil deleteWebhook
+    Logger.log("deleteWebhook: " + hasil);
     return hasil;
 }
 
 // --- Fungsi utama (doPost) ---
 function doPost(e) {
-    try { // Tambahkan try-catch di seluruh doPost
+    try {
         if (debug) {
             tg.sendMessage(adminBot, JSON.stringify(e, null, 2));
         }
@@ -48,7 +48,7 @@ function doPost(e) {
             return;
         }
 
-        // Handle callback queries (dari tombol)
+        // Handle callback queries
         if (update.callback_query) {
             handleCallbackQuery(update.callback_query);
             return;
@@ -57,9 +57,8 @@ function doPost(e) {
         // Handle pesan biasa
         if (update.message) {
             let msg = update.message;
-            Logger.log("Pesan diterima: " + JSON.stringify(msg, null, 2)); // Log pesan
+            Logger.log("Pesan diterima: " + JSON.stringify(msg, null, 2));
 
-            // Cek apakah dari admin
             if (msg.from.id == adminBot) {
                 if (msg.text == "/start") {
                     startCommand(msg);
@@ -69,14 +68,13 @@ function doPost(e) {
                     tg.sendMessage(adminBot, "Perintah tidak dikenali atau tidak ada file/forward yang diproses.");
                 }
             } else {
-                // Pesan dari non-admin
                 tg.sendMessage(msg.chat.id, "Maaf, saya hanya merespons perintah dari admin.");
             }
         }
     } catch (error) {
         Logger.log("Error di doPost: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Terjadi error: " + error.message); // Kirim error ke admin
+        tg.sendMessage(adminBot, "Terjadi error: " + error.message);
     }
 }
 
@@ -91,12 +89,12 @@ function startCommand(msg) {
 }
 
 function handleInlineQuery(inlineQuery) {
-    try { // Tambahkan try-catch
+    try {
         let query = inlineQuery.query;
-        Logger.log("handleInlineQuery - Query: " + query); // Log query
+        Logger.log("handleInlineQuery - Query: " + query);
 
         let results = searchFiles(query);
-        Logger.log("handleInlineQuery - Hasil: " + JSON.stringify(results)); // Log hasil
+        Logger.log("handleInlineQuery - Hasil: " + JSON.stringify(results));
 
         let response = {
             inline_query_id: inlineQuery.id,
@@ -105,20 +103,19 @@ function handleInlineQuery(inlineQuery) {
         };
 
         tg.request("answerInlineQuery", response);
+
     } catch (error) {
         Logger.log("Error di handleInlineQuery: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Error di handleInlineQuery: " + error.message); // Kirim error ke admin
-
+        tg.sendMessage(adminBot, "Error di handleInlineQuery: " + error.message);
     }
 }
 
 function handleCallbackQuery(callbackQuery) {
-     try{
+    try {
         let data = callbackQuery.data;
         let cb = callbackQuery;
-
-        Logger.log("handleCallbackQuery - Data: " + data); // Log data callback
+        Logger.log("handleCallbackQuery - Data: " + data);
 
         if (data === "help") {
             let pesan = "<b>Bantuan:</b>\n\n" +
@@ -128,17 +125,16 @@ function handleCallbackQuery(callbackQuery) {
             sendMsgKeyboardInline2(cb, pesan, []);
         }
         tg.answerCallbackQuery(callbackQuery.id, "Perintah diterima!");
-    } catch (error) {
+    }   catch (error) {
         Logger.log("Error di handleCallbackQuery: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Error di handleCallbackQuery: " + error.message); // Kirim error ke admin
+        tg.sendMessage(adminBot, "Error di handleCallbackQuery: " + error.message);
     }
 }
 
 // --- Fungsi Penyimpanan Data ---
-
 function saveForwardedMessage(msg) {
-    try { // Tambahkan try-catch
+    try {
         let fileId, fileName, fileType, caption, uploadedBy, messageLink;
 
         // Mendapatkan link pesan
@@ -148,8 +144,7 @@ function saveForwardedMessage(msg) {
             messageLink = "private chat/channel";
         } else if (msg.forward_sender_name) {
             messageLink = "forwarded from " + msg.forward_sender_name;
-        }
-        else {
+        } else {
             messageLink = "Unknown";
         }
 
@@ -167,7 +162,7 @@ function saveForwardedMessage(msg) {
             fileType = "document";
         }
 
-        Logger.log("saveForwardedMessage - File: " + fileName + ", Type: " + fileType); // Log info file
+        Logger.log("saveForwardedMessage - File: " + fileName + ", Type: " + fileType + ", fileId: " + fileId);
 
         let sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
         sheet.appendRow([fileId, fileName, fileType, caption, uploadedBy, messageLink]);
