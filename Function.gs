@@ -1,6 +1,4 @@
-// ... (Fungsi-fungsi yang sudah ada dari function.gs kamu) ...
-
-// Fungsi untuk mencari file di Google Sheet berdasarkan query
+// --- Fungsi Pencarian (searchFiles) ---
 function searchFiles(query) {
     let sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
     let data = sheet.getDataRange().getValues();
@@ -12,11 +10,15 @@ function searchFiles(query) {
         let fileName = data[i][1];
         let fileType = data[i][2];
         let caption = data[i][3];
-        // let uploadedBy = data[i][4]; // Tidak digunakan dalam pencarian
-        let messageLink = data[i][5]
+        let messageLink = data[i][5];
+
+        // Pencarian case-insensitive (ubah ke lowercase)
+        let queryLower = query.toLowerCase();
+        let fileNameLower = fileName.toLowerCase();
+        let captionLower = caption.toLowerCase();
 
         // Cek apakah query cocok dengan nama file atau caption
-        if (fileName.toLowerCase().includes(query.toLowerCase()) || caption.toLowerCase().includes(query.toLowerCase())) {
+        if (fileNameLower.includes(queryLower) || captionLower.includes(queryLower)) {
             let result;
 
             if (fileType == "photo") {
@@ -27,21 +29,22 @@ function searchFiles(query) {
                     title: fileName,
                     caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
                     parse_mode: "HTML",
-
                 };
             } else if (fileType == "document") {
                 result = {
                     type: "document",
                     id: fileId,
-                    document_file_id: fileId,
+                    document_file_id: fileId, //Gunakan file_id
                     title: fileName,
                     caption: caption + "\n<a href='" + messageLink + "'>Link</a>",
                     parse_mode: "HTML",
+                    thumb_url: "", //Optional
+                    thumb_width: 50,  //Optional
+                    thumb_height: 50 //Optional
                 };
-            }
-            // else if (fileType == "video") ...
+            } // Tambahkan else if untuk jenis file lain jika perlu
 
-            if (result) { // Periksa apakah 'result' sudah diinisialisasi
+            if (result) {
                 results.push(result);
             }
         }
@@ -50,7 +53,9 @@ function searchFiles(query) {
     return results;
 }
 
-// Fungsi-fungsi lain yang sudah kamu miliki (sendMsgKeyboardInline, dll.)
+// --- Fungsi-fungsi dari function.gs kamu (yang tidak berubah) ---
+// (Semua fungsi sendMsgKeyboardInline, kirimPesanX, dll. tetap sama)
+
 //inline keyboard v1
 function sendMsgKeyboardInline(msg, pesan, keyboard) {
   let data = {
