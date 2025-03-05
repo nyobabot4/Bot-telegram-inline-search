@@ -1,14 +1,13 @@
-var token = "7849305390:AAHsD9O-IhGyLnCJPxOoIg1a_acn5spNOFA"; // GANTI dengan token bot Anda
-const tg = new telegram(token); // Gunakan class telegram
-const adminBot = 2109541199; // GANTI dengan ID admin Anda
-const spreadsheetId = "10TupgRfroPas2SjNNY19Q4uB82AYGUVwIIisBxb9Mgg"; // GANTI dengan ID spreadsheet Anda
+var token = "7849305390:AAHsD9O-IhGyLnCJPxOoIg1a_acn5spNOFA"; // GANTI DENGAN TOKEN BOT ANDA!
+const adminBot = 2109541199; // GANTI DENGAN ID ADMIN ANDA!
+const spreadsheetId = "10TupgRfroPas2SjNNY19Q4uB82AYGUVwIIisBxb9Mgg"; // GANTI DENGAN ID SPREADSHEET ANDA!
 const debug = false;
 
 // --- Fungsi utama (doPost) ---
 function doPost(e) {
     try {
         if (debug) {
-            tg.sendMessage(adminBot, JSON.stringify(e, null, 2));
+            telegram.sendMessage(adminBot, JSON.stringify(e, null, 2)); // Menggunakan library
         }
 
         let update = JSON.parse(e.postData.contents);
@@ -39,20 +38,21 @@ function doPost(e) {
                 } else if (msg.forward_from || msg.forward_from_chat || msg.photo || msg.document) {
                     saveForwardedMessage(msg);
                 } else {
-                    tg.sendMessage(adminBot, "Perintah tidak dikenali atau tidak ada file/forward yang diproses.");
+                    telegram.sendMessage(adminBot, "Perintah tidak dikenali atau tidak ada file/forward yang diproses."); // Menggunakan library
                 }
             } else {
-                tg.sendMessage(msg.chat.id, "Maaf, saya hanya merespons perintah dari admin.");
+                telegram.sendMessage(msg.chat.id, "Maaf, saya hanya merespons perintah dari admin."); // Menggunakan library
             }
         }
     } catch (error) {
         Logger.log("Error di doPost: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Terjadi error: " + error.message);
+        telegram.sendMessage(adminBot, "Terjadi error: " + error.message); // Menggunakan library
     }
 }
 
 // --- Handler Commands dan Callbacks ---
+
 function startCommand(msg) {
     let keyboard = [
         [{ text: "Cari File", switch_inline_query_current_chat: "" }],
@@ -64,38 +64,39 @@ function startCommand(msg) {
 function handleInlineQuery(inlineQuery) {
     try {
         let query = inlineQuery.query;
-        let limit = 50;
+        let limit = 50; // Batas 50 hasil
 
-        let results = searchFiles(query, limit);
+        let results = searchFiles(query, limit); // Panggil searchFiles dengan query dan limit
 
-        let stringifiedResults = results.map(result => JSON.stringify(result));
-
-        // --- BAGIAN PENTING UNTUK switch_pm_text ---
+        // Buat teks untuk switch_pm_text (pesan di atas hasil)
         let switchPmText = "";
-        if (query.trim() === "") {  // Periksa apakah query kosong
-            switchPmText = "Silakan ketik kata kunci untuk mencari..."; // Pesan jika query kosong
-        } else {
-            switchPmText = `Hasil: ada ${results.length} untuk '${query}'`; // Pesan jika ada query
+        if (query.trim() === "") { // Jika query kosong
+            switchPmText = "Silakan ketik kata kunci untuk mencari...";
+        } else { // Jika ada kata kunci
+            switchPmText = `Hasil: ada ${results.length} untuk '${query}'`;
         }
 
+        // Konversi hasil ke format JSON yang benar
+        let stringifiedResults = results.map(result => JSON.stringify(result));
+
+        // Buat objek respons untuk answerInlineQuery
         let response = {
             inline_query_id: inlineQuery.id,
-            results: "[" + stringifiedResults.join(",") + "]",
+            results: "[" + stringifiedResults.join(",") + "]", // Gabungkan hasil dengan koma
             cache_time: 10,
-            switch_pm_text: switchPmText,   // Teks yang akan ditampilkan di atas
-            switch_pm_parameter: "start",  // Parameter opsional (bisa untuk deep linking)
+            switch_pm_text: switchPmText,  // Tambahkan pesan di atas hasil
+            switch_pm_parameter: "start", // Parameter opsional untuk deep linking
         };
-        // --- SELESAI BAGIAN PENTING ---
-        Logger.log("response inline =" + JSON.stringify(response))
-        tg.request("answerInlineQuery", response);
+
+        Logger.log("response inline =" + JSON.stringify(response));
+        telegram.request("answerInlineQuery", response); // Menggunakan library
 
     } catch (error) {
         Logger.log("Error di handleInlineQuery: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Error di handleInlineQuery: " + error.message);
+        telegram.sendMessage(adminBot, "Error di handleInlineQuery: " + error.message); // Menggunakan library
     }
 }
-
 function handleCallbackQuery(callbackQuery) {
     try {
         let data = callbackQuery.data;
@@ -109,15 +110,16 @@ function handleCallbackQuery(callbackQuery) {
                 "(ketik @nama_bot_kamu [spasi] query di chat mana pun).";  // Ganti @nama_bot_kamu
             sendMsgKeyboardInline2(cb, pesan, []);
         }
-        tg.answerCallbackQuery(callbackQuery.id, "Perintah diterima!");
+        telegram.answerCallbackQuery(callbackQuery.id, "Perintah diterima!"); // Perubahan di sini
     }   catch (error) {
         Logger.log("Error di handleCallbackQuery: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Error di handleCallbackQuery: " + error.message);
+        telegram.sendMessage(adminBot, "Error di handleCallbackQuery: " + error.message); // Perubahan di sini
     }
 }
 
 // --- Fungsi Penyimpanan Data ---
+
 function saveForwardedMessage(msg) {
     try {
         let fileId, fileName, fileType, caption, uploadedBy, messageLink;
@@ -152,38 +154,36 @@ function saveForwardedMessage(msg) {
         let sheet = SpreadsheetApp.openById(spreadsheetId).getActiveSheet();
         sheet.appendRow([fileId, fileName, fileType, caption, uploadedBy, messageLink]);
 
-        tg.sendMessage(adminBot, `File ${fileName} tersimpan!`);
+        telegram.sendMessage(adminBot, `File ${fileName} tersimpan!`); // Menggunakan library
 
     } catch (error) {
         Logger.log("Error di saveForwardedMessage: " + error.message);
         Logger.log("Stack trace: " + error.stack);
-        tg.sendMessage(adminBot, "Error saat menyimpan file: " + error.message);
+        telegram.sendMessage(adminBot, "Error saat menyimpan file: " + error.message); // Menggunakan library
     }
 }
 
-
 function getMe() {
-    let me = tg.getMe();
+    let me = telegram.getMe(); //Perubahan
     Logger.log("getMe: " + JSON.stringify(me));
     return me;
 }
 
 function setWebhook() {
     var url = "YOUR_WEB_APP_URL"; // GANTI dengan URL Web App kamu setelah deploy!
-    var r = tg.setWebhook(url);
+    var r = telegram.setWebhook(url); //Perubahan
     Logger.log("setWebhook: " + r);
     return r;
 }
 
 function getWebhookInfo() {
-    let hasil = tg.getWebhookInfo();
+    let hasil = telegram.getWebhookInfo(); //Perubahan
     Logger.log("getWebhookInfo: " + JSON.stringify(hasil));
     return hasil;
 }
 
 function deleteWebhook() {
-    let hasil = tg.deleteWebhook();
+    let hasil = telegram.deleteWebhook(); //Perubahan
     Logger.log("deleteWebhook: " + hasil);
     return hasil;
 }
-
