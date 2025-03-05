@@ -175,3 +175,6 @@ function saveForwardedMessage(msg) {
         tg.sendMessage(adminBot, "Error saat menyimpan file: " + error.message);
     }
 }
+// -- kalau mau bikin fungsi sendiri, taruh di bawah sini ---
+// https://api.telegram.org/bot(botapi)/setwebhook?url=(deploylink)
+// id library : 11LhYmqUg8UVtqMg3rPaau5uHwCMtsE_0RwUQim4ZY-OCfDe_YyIYKPSP/23 + api gdrive + api gsheet + id gsheet
